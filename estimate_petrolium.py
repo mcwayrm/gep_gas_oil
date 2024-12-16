@@ -7,6 +7,7 @@ This script produces a panel of country-year values for GEP by petrolium as an e
 # Dependencies
 import os
 import pandas as pd
+import numpy as np
 
 def clean_wb_data(df, col_name):
     # Rename variables: 
@@ -62,10 +63,22 @@ df_gep = pd.merge(left = df_oil_rents,
             how = 'inner')
 
 # Assign nature's contribution value through resource rent adjustment
-resource_rent = 0.3
+# Define conditions
+conditions = [
+    (df_gep['year'] <= 1995),
+    (df_gep['year'] >= 1996) & (df_gep['year'] <= 2000),
+    (df_gep['year'] >= 2001) & (df_gep['year'] <= 2005),
+    (df_gep['year'] >= 2006) & (df_gep['year'] <= 2010), 
+    (df_gep['year'] >= 2011) & (df_gep['year'] <= 2015),  
+    (df_gep['year'] >= 2016)  
+]
+# Define corresponding values
+values = [0.17, 0.29, 0.39, 0.37, 0.26, 0.20]
+# Create resource rent value
+df_gep['resource_rent'] = np.select(conditions, values, default='Unknown')
 
 # Estimate GEP value for oil 
-df_gep["gep"] = df_gep["oil"] * df_gep["gdp"] * resource_rent
+df_gep["gep_oil"] = df_gep["oil"] * df_gep["gdp"] * df['resource_rent']
 
 # Save a csv file of country, year petrolium values
 df_gep = df_gep.sort_values(by = ['country', 'year'], ascending = [True, True])
