@@ -84,13 +84,18 @@ df_gep['resource_rent'] = np.select(conditions, values, default=np.nan)
 # Estimate GEP value for gas 
 df_gep["gep_gas"] = df_gep["gas"] * df_gep["gdp"] * df_gep['resource_rent']
 
+# Only keep 2019 values 
+df_gep = df_gep[df_gep['year'] == 2019]
+
 # Correctiong for ee_r250 country mapping
 file_path = "../data/ee_r250_correspondence.gpkg"
 gdf = gpd.read_file(file_path)
 # Merge on country code from df_gep and adm0_a3 from geopackage
-df_merged = pd.merge(df_gep, gdf, how='inner', left_on='country_code', right_on='adm0_a3')
+df_merged = pd.merge(gdf, df_gep,  how='left', left_on='adm0_a3', right_on='country_code')
+# Keep a subset of variables 
+df_merged = df_merged[['ee_r264_id', 'iso3_r250_id', 'iso3_r250_label', 'ee_r264_description', 'gep_gas']]
 
 # Save a csv file of country, year petrolium values
-df_gep = df_gep.sort_values(by = ['country', 'year'], ascending = [True, True])
+df_gep = df_merged.sort_values(by = ['ee_r264_id'], ascending = [True])
 df_gep.to_csv("../data/gep-datasets/gep-gas.csv", index=False)
 
