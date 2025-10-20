@@ -1,7 +1,7 @@
 """
-This script combines the world bank measures of national GDP with the % of gdp related to petrol. 
+This script combines the world bank measures of national GDP with the % of gdp related to coal. 
 Then I adjust for nature's contribution. 
-This script produces a panel of country-year values for GEP by petrolium as an ecosystem service. 
+This script produces a panel of country-year values for GEP by coal as an ecosystem service. 
 """
 
 # Dependencies
@@ -49,18 +49,18 @@ def clean_wb_data(df, col_name):
     # Return Dataframe
     return(df)
 
-# Import: World Bank Oil Rents: https://data.worldbank.org/indicator/NY.GDP.PETR.RT.ZS
-df_oil_rents = pd.read_excel("../data/world_bank/national_petrol_edited.xls")
+# Import: World Bank coal Rents: https://data.worldbank.org/indicator/NY.GDP.COAL.RT.ZS
+df_coal_rents = pd.read_excel("../data/world_bank/national_coal_edited.xls")
 # Import: World Bank GDP: https://data.worldbank.org/indicator/NY.GDP.MKTP.CD
 df_gdp = pd.read_excel("../data/world_bank/national_gdp_edited.xls")
 
-# Clean oil rents data 
-df_oil_rents = clean_wb_data(df_oil_rents, "oil")
+# Clean coal rents data 
+df_coal_rents = clean_wb_data(df_coal_rents, "coal")
 # Clean GDP data
 df_gdp = clean_wb_data(df_gdp, "gdp")
 
-# Merge GDP with oil rents data
-df_gep = pd.merge(left = df_oil_rents,
+# Merge GDP with coal rents data
+df_gep = pd.merge(left = df_coal_rents,
             right = df_gdp,
             how = 'inner')
 
@@ -80,7 +80,7 @@ values = [0.17, 0.29, 0.39, 0.37, 0.26, 0.20]
 df_gep['resource_rent'] = np.select(conditions, values, default=np.nan)
 
 # Estimate GEP value for gas 
-df_gep["gep_oil"] = df_gep["oil"] * df_gep["gdp"] * df_gep['resource_rent']
+df_gep["gep_coal"] = df_gep["coal"] * df_gep["gdp"] * df_gep['resource_rent']
 
 # Correctiong for ee_r250 country mapping
 file_path = "../data/ee_r250_correspondence.gpkg"
@@ -88,6 +88,6 @@ gdf = gpd.read_file(file_path)
 # Merge on country code from df_gep and adm0_a3 from geopackage
 df_merged = pd.merge(df_gep, gdf, how='inner', left_on='country_code', right_on='adm0_a3')
 
-# Save a csv file of country, year petrolium values
+# Save a csv file of country, year coal values
 df_gep = df_gep.sort_values(by = ['country', 'year'], ascending = [True, True])
-df_gep.to_csv("../data/gep-datasets/gep-petrolium.csv", index=False)
+df_gep.to_csv("../data/gep-datasets/gep-coal.csv", index=False)

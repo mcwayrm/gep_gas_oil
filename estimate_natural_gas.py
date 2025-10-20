@@ -7,6 +7,8 @@ This script produces a panel of country-year values for GEP by natural gas as an
 # Dependencies
 import os
 import pandas as pd
+import geopandas as gpd
+import numpy as np  
 
 
 def clean_wb_data(df, col_name):
@@ -58,9 +60,6 @@ df_gas_rents = clean_wb_data(df_gas_rents, "gas")
 df_gdp = clean_wb_data(df_gdp, "gdp")
 
 
-# TODO: Complete the Merge, apply resource rent, save output
-    # TODO: Use commerical agriculture as reference.
-
 # Merge GDP with oil rents data
 df_gep = pd.merge(left = df_gas_rents,
             right = df_gdp,
@@ -68,6 +67,7 @@ df_gep = pd.merge(left = df_gas_rents,
 
 # Assign nature's contribution value through resource rent adjustment
 # Define conditions
+df_gep['year'] = df_gep['year'].astype(int)
 conditions = [
     (df_gep['year'] <= 1995),
     (df_gep['year'] >= 1996) & (df_gep['year'] <= 2000),
@@ -79,11 +79,18 @@ conditions = [
 # Define corresponding values
 values = [0.17, 0.29, 0.39, 0.37, 0.26, 0.20]
 # Create resource rent value
-df_gep['resource_rent'] = np.select(conditions, values, default='Unknown')
+df_gep['resource_rent'] = np.select(conditions, values, default=np.nan)
 
 # Estimate GEP value for gas 
-df_gep["gep_gas"] = df_gep["oil"] * df_gep["gdp"] * df['resource_rent']
+df_gep["gep_gas"] = df_gep["gas"] * df_gep["gdp"] * df_gep['resource_rent']
+
+# Correctiong for ee_r250 country mapping
+file_path = "../data/ee_r250_correspondence.gpkg"
+gdf = gpd.read_file(file_path)
+# Merge on country code from df_gep and adm0_a3 from geopackage
+df_merged = pd.merge(df_gep, gdf, how='inner', left_on='country_code', right_on='adm0_a3')
 
 # Save a csv file of country, year petrolium values
 df_gep = df_gep.sort_values(by = ['country', 'year'], ascending = [True, True])
 df_gep.to_csv("../data/gep-datasets/gep-gas.csv", index=False)
+
