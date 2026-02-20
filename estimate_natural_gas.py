@@ -22,8 +22,8 @@ gdf = gpd.read_file(file_path)
 # Merge on country code from df_gep and adm0_a3 from geopackage
 df_merged = pd.merge(gdf, df_gep,  how='left', left_on='adm0_a3', right_on='country_code')
 # Keep a subset of variables 
-df_merged = df_merged[['ee_r264_id', 'iso3_r250_id', 'iso3_r250_label', 'ee_r264_description', 'gep_gas']]
+df_merged = df_merged[['iso3_r250_id', 'iso3_r250_label', 'iso3_r250_name', 'gep_gas']]
 
 # Save a csv file of country, year natural gas values
-df_gep = df_merged.sort_values(by = ['ee_r264_id'], ascending = [True])
+df_gep = df_merged.sort_values(by = ['iso3_r250_id'], ascending = [True])
 df_gep.to_csv("../data/gep-datasets/gep-gas.csv", index=False)
